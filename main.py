@@ -34,23 +34,79 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += self.vel_x
         self.rect.y += self.vel_y
 
+        #if self.rect.x + self.rect.width > WIDTH or self.rect.x < 0:
+        #    self.vel_x += 1
+        #if self.rect.y + self.rect.height > HEIGHT or self.rect.y < 0:
+        #    self.vel_y *= -1
+
+        #TODO: Add boundaries around the screen
+
 
     def go_left(self):
-        self.vel_x = -6
+        self.vel_x = -10
 
     def go_right(self):
-        self.vel_x = 6
+        self.vel_x = 10
 
     def go_up(self):
-        self.vel_y = -6
+        self.vel_y = -10
 
     def go_down(self):
-        self.vel_y = 6
+        self.vel_y = 10
 
     def stop(self):
         self.vel_x = 0
         self.vel_y = 0
 
+
+class Axe(pygame.sprite.Sprite):
+    def __init__(self,coords):
+        super().__init__()
+
+        self.image = pygame.image.load("./images/axe.png")
+        self.image = pygame.transform.scale(self.image, (180, 100))
+        self.rect = self.image.get_rect()
+
+        self.rect.centerx, self.rect.bottom = coords
+
+
+        self.vel_x = 0
+
+
+    def update(self):
+        self.rect.x += self.vel_x
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+
+        self.image = pygame.image.load("./images/enemy.png")
+        self.image = pygame.transform.scale(self.image, (200,170))
+        self.rect = self.image.get_rect()
+
+        self.rect.centerx = (100)
+        self.rect.centery = (HEIGHT // 2)
+
+        self.vel_x = 0
+
+    def update(self):
+        self.rect.x += self.vel_x
+
+class Enemylaser(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+
+        self.image = pygame.image.load("./images/laser.png")
+        self.image = pygame.transform.scale(self.image, (136,72))
+        self.rect = self.image.get_rect()
+
+class Background(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+
+        self.image = pygame.image.load("./images/background .png")
+        self.image = pygame.transform.scale(self.image, (1280, 720))
+        self.rect = self.image.get_rect()
 
 
 
@@ -65,13 +121,24 @@ def main():
     # ----- LOCAL VARIABLES
     done = False
     clock = pygame.time.Clock()
+    b = True
+
 
 
     all_sprites_group = pygame.sprite.Group()
+    background_group = pygame.sprite.Group()
 
     # Player creation
     player = Player()
     all_sprites_group.add(player)
+
+    # Enemy creation
+    enemy = Enemy()
+    all_sprites_group.add(enemy)
+
+    # Background creation
+    background = Background()
+    background_group.add(background)
 
     # ----- MAIN LOOP
     while not done:
@@ -83,12 +150,36 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
                     player.go_right()
+                    player.image = pygame.image.load("./images/draven.png")
+                    player.image = pygame.transform.scale(player.image, (258, 181))
+                    b = True
                 if event.key == pygame.K_LEFT:
                     player.go_left()
+                    player.image = pygame.image.load("./images/dravenflip.png")
+                    player.image = pygame.transform.scale(player.image, (258, 181))
+                    b = False
                 if event.key == pygame.K_UP:
                     player.go_up()
                 if event.key == pygame.K_DOWN:
                     player.go_down()
+
+
+                if event.key == pygame.K_q and b == True:
+                    axe = Axe(player.rect.midright)
+                    all_sprites_group.add(axe)
+                    axe.image = pygame.image.load("./images/axe.png")
+                    axe.image = pygame.transform.scale(axe.image, (180, 100))
+                    axe.vel_x = 5
+                if event.key == pygame.K_q and b == False:
+                    axe = Axe(player.rect.midleft)
+                    all_sprites_group.add(axe)
+                    axe.image = pygame.image.load("./images/axeflip.png")
+                    axe.image = pygame.transform.scale(axe.image, (180, 100))
+                    axe.vel_x = -5
+
+
+
+
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT and player.vel_x < 0:
@@ -106,10 +197,11 @@ def main():
 
 
         # ----- LOGIC
+
         all_sprites_group.update()
 
         # ----- DRAW
-        screen.fill(GREEN)
+        background_group.draw(screen)
         all_sprites_group.draw(screen)
 
         # ----- UPDATE

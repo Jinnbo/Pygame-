@@ -10,6 +10,8 @@ W + Arrow Key: Quick dash
 
 **Objective**:
 
-Surivive and kill 10 minions to trigger boss fight
+Surivive for as long as possible 
+
+Kill 10 minions to trigger boss fight 
 
 

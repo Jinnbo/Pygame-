@@ -1,5 +1,7 @@
 # Pygame-
 
+- Game plays best at 1080p 
+
 **Controls**:
 
 Arrow Keys: Move left/right/up/down

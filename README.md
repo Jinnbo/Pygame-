@@ -2,10 +2,14 @@
 
 Controls:
 
-Arrow keys to move
+Arrow Keys: Move left/right/up/down
 
-Q to throw blades
+Q: Throws an axe
 
-Objective:
+W + Arrow Key: Quick dash
 
-Survive
+**Objective**:
+
+Surivive and kill 10 minions to trigger boss fight
+
+

@@ -7,8 +7,8 @@ WHITE = (255, 255, 255)
 YELLOW = (255, 255, 0)
 SKY_BLUE = (95, 165, 228)
 GREEN = (96, 171, 154)
-WIDTH = 1920
-HEIGHT = 1080
+WIDTH = 1280
+HEIGHT = 720
 NUM_ENEMIES = 20
 TITLE = "<Draven>"
 
@@ -111,6 +111,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.centerx = (x_coord)
         self.rect.centery = (y_coord)
 
+
     def update(self):
         self.rect.x += self.vel_x
         self.rect.y += self.vel_y
@@ -127,31 +128,52 @@ class Teemo(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (137, 192))
         self.rect = self.image.get_rect()
 
+
         self.rect.centerx = WIDTH + 200
         self.rect.centery = HEIGHT // 2
+
+
 
         self.vel_x = 0
         self.vel_y = 0
 
+        self.reached_middle = False
+
     def update(self):
+
         self.rect.x += self.vel_x
         self.rect.y += self.vel_y
 
-
-        if self.rect.y > HEIGHT or self.rect.y < 0:
+        if self.rect.centerx == WIDTH - 200 and not self.reached_middle:
+            self.stop()
+            self.vel_y = 4
+            self.reached_middle = True
+        if self.rect.bottom > HEIGHT or self.rect.top < 0:
             self.vel_y *= -1
 
     def stop(self):
         self.vel_x = 0
 
 
+
 class Mushroom(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, coords):
         super().__init__()
 
         self.image = pygame.image.load("./images/mushroom.png")
-        self.image = pygame.transform.scale(self.image, (50, 100))
+        self.image = pygame.transform.scale(self.image, (75, 72))
         self.rect = self.image.get_rect()
+        self.rect.centerx, self.rect.bottom = coords
+
+        self.rect.centerx = WIDTH - 200
+
+
+        self.vel_x = 0
+
+    def update(self):
+        self.rect.x += self.vel_x
+
+
 
 
 def main():
@@ -168,13 +190,17 @@ def main():
     score = 10
     health = 1000
     bool = True
+    teemo_spawned = False
+    mushroom_spawn_time = 2000
+    last_time_mushroom_spawned = pygame.time.get_ticks()
 
     # ---- SPRITE GROUPS
 
-    all_sprites_group = pygame.sprite.Group()
+    all_sprites_group = pygame.sprite.RenderUpdates()
     background_group = pygame.sprite.Group()
     axe_sprites = pygame.sprite.Group()
     enemy_group = pygame.sprite.Group()
+    mushroom_group = pygame.sprite.Group()
 
     # Player creation
     player = Player()
@@ -229,9 +255,7 @@ def main():
                 if event.key == pygame.K_w and pygame.K_LEFT and not bool:
                     player.go_leftw()
 
-                # TODO: Add other abilities
-                # TODO: Rotate the axe
-                # TODO: Create stronger minion waves
+
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT and player.vel_x < 0:
@@ -262,6 +286,29 @@ def main():
         # ----- LOGIC
         all_sprites_group.update()
 
+        if health <= 0:
+            done = True
+
+        if health >= 0 and teemo_spawned:
+            if pygame.time.get_ticks() >  last_time_mushroom_spawned + mushroom_spawn_time:
+                last_time_mushroom_spawned = pygame.time.get_ticks()
+
+                mushroom = Mushroom(teemo.rect.midbottom)
+                mushroom.vel_x  = -5
+                all_sprites_group.add(mushroom)
+                mushroom_group.add(mushroom)
+
+            for mushroom in mushroom_group:
+                if mushroom.rect.right < 0:
+                    mushroom.kill()
+
+                mushrooms_hit_player = pygame.sprite.spritecollide(player, mushroom_group, True)
+                if len(mushrooms_hit_player) > 0:
+                    health -= 50
+                    mushroom.kill()
+
+
+
         # Check if axe collided with enemy
 
         for axe in axe_sprites:
@@ -274,30 +321,32 @@ def main():
                 axe.kill()
             for i in enemy_hit_group:
                 score += 20
+            mushroom_hit_axe = pygame.sprite.spritecollide(axe, mushroom_group, True)
+            if len(mushroom_hit_axe) > 0:
+                mushroom.kill()
+                axe.kill()
+                score += 50
 
         for enemy in enemy_group:
 
             enemy_hit_player_group = pygame.sprite.spritecollide(player, enemy_group, True)
             for i in enemy_hit_player_group:
                 score += 10
-                health -= 50
+                #health -= 50
                 print(health)
 
             # Stronger Enemy
-            if score >= 2:
+            if score >= 10 and not teemo_spawned:
                 teemo.vel_x = -5
-            if teemo.rect.centerx == WIDTH - 200:
-                teemo.stop()
-                teemo.vel_y = 4
-            if teemo.rect.y > HEIGHT or teemo.rect.y < 0:
-                teemo.vel_y *= -1
+                teemo_spawned = True
+
 
         # ----- DRAW
         background_group.draw(screen)
         all_sprites_group.draw(screen)
 
         score_board(screen, f"Score: {score}", 50, WIDTH - 100, 10)
-        score_board(screen, f"Health: {health}", 50, WIDTH - 350, 10)
+        score_board(screen, f"Health: {health}", 50, WIDTH - 400, 10)
 
         # ----- UPDATE
         pygame.display.flip()

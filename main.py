@@ -6,21 +6,21 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 YELLOW = (255, 255, 0)
 SKY_BLUE = (95, 165, 228)
-GREEN = (96,171,154)
-WIDTH = 1280
-HEIGHT = 720
-NUM_ENEMIES = 30
+GREEN = (96, 171, 154)
+WIDTH = 1920
+HEIGHT = 1080
+NUM_ENEMIES = 20
 TITLE = "<Draven>"
 
 font_name = pygame.font.match_font('arial')
-def score_board(surf, text, size, x,y):
+
+
+def score_board(surf, text, size, x, y):
     font = pygame.font.Font(font_name, size)
     text_surface = font.render(text, True, WHITE)
     text_rect = text_surface.get_rect()
-    text_rect.midtop = (x,y)
+    text_rect.midtop = (x, y)
     surf.blit(text_surface, text_rect)
-
-
 
 
 class Background(pygame.sprite.Sprite):
@@ -28,29 +28,27 @@ class Background(pygame.sprite.Sprite):
         super().__init__()
 
         self.image = pygame.image.load("./images/background.jpg")
-        self.image = pygame.transform.scale(self.image, (WIDTH,HEIGHT))
+        self.image = pygame.transform.scale(self.image, (WIDTH, HEIGHT))
 
         self.rect = self.image.get_rect()
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
 
-
         self.image = pygame.image.load("./images/draven.png")
-        self.image = pygame.transform.scale(self.image, (258,181))
+        #self.image = pygame.transform.scale(self.image, (258, 181))
         self.rect = self.image.get_rect()
 
         # Sets sprite location
-        self.rect.centerx = (WIDTH//10)
-        self.rect.centery = (HEIGHT//2)
+        self.rect.centerx = (WIDTH // 10)
+        self.rect.centery = (HEIGHT // 2)
 
         self.vel_x = 0
         self.vel_y = 0
 
-
     def update(self):
-
         # Moves left/right and up/down
         self.rect.x += self.vel_x
         self.rect.y += self.vel_y
@@ -81,12 +79,13 @@ class Player(pygame.sprite.Sprite):
         self.vel_x = 0
         self.vel_y = 0
 
+
 class Axe(pygame.sprite.Sprite):
     def __init__(self, coords):
         super().__init__()
 
         self.image = pygame.image.load("./images/axe.png")
-        self.image = pygame.transform.scale(self.image, (100,140))
+        self.image = pygame.transform.scale(self.image, (100, 140))
 
         self.rect = self.image.get_rect()
         self.rect.centerx, self.rect.bottom = coords
@@ -96,12 +95,13 @@ class Axe(pygame.sprite.Sprite):
     def update(self):
         self.rect.x += self.vel_x
 
+
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x_coord,y_coord,vel_x,vel_y):
+    def __init__(self, x_coord, y_coord, vel_x, vel_y):
         super().__init__()
 
         self.image = pygame.image.load("./images/minion.png")
-        self.image = pygame.transform.scale(self.image, (105,86))
+        self.image = pygame.transform.scale(self.image, (105, 86))
 
         self.rect = self.image.get_rect()
 
@@ -115,19 +115,20 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.x += self.vel_x
         self.rect.y += self.vel_y
 
-        #if self.rect.right > WIDTH or self.rect.left < 0:
-            #self.vel_x *= -1
-   
+        # if self.rect.right > WIDTH or self.rect.left < 0:
+        # self.vel_x *= -1
+
+
 class Teemo(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
 
         self.image = pygame.image.load("./images/teemo.png")
-        self.image = pygame.transform.scale(self.image, (137,192))
+        self.image = pygame.transform.scale(self.image, (137, 192))
         self.rect = self.image.get_rect()
 
         self.rect.centerx = WIDTH + 200
-        self.rect.centery = HEIGHT//2
+        self.rect.centery = HEIGHT // 2
 
         self.vel_x = 0
         self.vel_y = 0
@@ -136,17 +137,21 @@ class Teemo(pygame.sprite.Sprite):
         self.rect.x += self.vel_x
         self.rect.y += self.vel_y
 
+
+        if self.rect.y > HEIGHT or self.rect.y < 0:
+            self.vel_y *= -1
+
     def stop(self):
-        self.vel_x =0
+        self.vel_x = 0
+
 
 class Mushroom(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        
+
         self.image = pygame.image.load("./images/mushroom.png")
-        self.image = pygame.transform.scale(self.image, (50,100))
+        self.image = pygame.transform.scale(self.image, (50, 100))
         self.rect = self.image.get_rect()
-        
 
 
 def main():
@@ -160,10 +165,9 @@ def main():
     # ----- LOCAL VARIABLES
     done = False
     clock = pygame.time.Clock()
-    score = 0
+    score = 10
     health = 1000
     bool = True
-
 
     # ---- SPRITE GROUPS
 
@@ -176,24 +180,19 @@ def main():
     player = Player()
     all_sprites_group.add(player)
 
-    # Enemy creation
+    # Minion creation
     for i in range(NUM_ENEMIES):
-        #enemy = Enemy(((9-i)*150)+1300,(100 + i * 50)-600,-1,1)
-        enemy = Enemy(random.randrange(WIDTH,WIDTH*5), random.randrange(HEIGHT),random.randrange(-2,-1),0)
+        enemy = Enemy(random.randrange(WIDTH, WIDTH * 3), random.randrange(50, HEIGHT), random.randrange(-2, -1), 0)
         all_sprites_group.add(enemy)
         enemy_group.add(enemy)
-
 
     # Stronger enemy creation
     teemo = Teemo()
     all_sprites_group.add(teemo)
 
-
     # Background creation
     background = Background()
     background_group.add(background)
-
-
 
     # ----- MAIN LOOP
     while not done:
@@ -230,12 +229,9 @@ def main():
                 if event.key == pygame.K_w and pygame.K_LEFT and not bool:
                     player.go_leftw()
 
-
-                #TODO: Add other abilities
-                #TODO: Rotate the axe
-                #TODO: Create stronger minion waves
-
-
+                # TODO: Add other abilities
+                # TODO: Rotate the axe
+                # TODO: Create stronger minion waves
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT and player.vel_x < 0:
@@ -246,7 +242,7 @@ def main():
                     player.stop()
                 if event.key == pygame.K_DOWN and player.vel_y > 0:
                     player.stop()
-                if event.key == pygame.K_w and player.vel_x >0:
+                if event.key == pygame.K_w and player.vel_x > 0:
                     player.stop()
                 if event.key == pygame.K_w and player.vel_x < 0:
                     player.stop()
@@ -263,10 +259,8 @@ def main():
         if player.rect.top < 0:
             player.rect.top = 0
 
-
         # ----- LOGIC
         all_sprites_group.update()
-
 
         # Check if axe collided with enemy
 
@@ -280,33 +274,30 @@ def main():
                 axe.kill()
             for i in enemy_hit_group:
                 score += 20
-                #print(score)
-                
-            
+
         for enemy in enemy_group:
-            
-            enemy_hit_player_group = pygame.sprite.spritecollide(player,enemy_group, True)
+
+            enemy_hit_player_group = pygame.sprite.spritecollide(player, enemy_group, True)
             for i in enemy_hit_player_group:
                 score += 10
-                health -= 1
+                health -= 50
                 print(health)
-                
 
-
-            #Stronger Enemy
-            if score >= 20:
+            # Stronger Enemy
+            if score >= 2:
                 teemo.vel_x = -5
-            if teemo.rect.centerx == WIDTH-200:
+            if teemo.rect.centerx == WIDTH - 200:
                 teemo.stop()
-                
-                
-
+                teemo.vel_y = 4
+            if teemo.rect.y > HEIGHT or teemo.rect.y < 0:
+                teemo.vel_y *= -1
 
         # ----- DRAW
         background_group.draw(screen)
         all_sprites_group.draw(screen)
 
-        score_board(screen,f"Score: {score}", 50, WIDTH-100, 10)
+        score_board(screen, f"Score: {score}", 50, WIDTH - 100, 10)
+        score_board(screen, f"Health: {health}", 50, WIDTH - 350, 10)
 
         # ----- UPDATE
         pygame.display.flip()

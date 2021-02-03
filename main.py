@@ -7,12 +7,15 @@ WHITE = (255, 255, 255)
 YELLOW = (255, 255, 0)
 SKY_BLUE = (95, 165, 228)
 GREEN = (96, 171, 154)
-WIDTH = 1280
-HEIGHT = 720
-NUM_ENEMIES = 20
+WIDTH = 1920
+HEIGHT = 1080
+PLAYER_SPEED = 3
+PLAYER_DASH_SPEED = 7
+
 TITLE = "<Draven>"
 
 font_name = pygame.font.match_font('arial')
+
 
 
 def score_board(surf, text, size, x, y):
@@ -38,7 +41,6 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
 
         self.image = pygame.image.load("./images/draven.png")
-        #self.image = pygame.transform.scale(self.image, (258, 181))
         self.rect = self.image.get_rect()
 
         # Sets sprite location
@@ -48,32 +50,18 @@ class Player(pygame.sprite.Sprite):
         self.vel_x = 0
         self.vel_y = 0
 
+        self.player_speed = 3
+
     def update(self):
-        # Moves left/right and up/down
-        self.rect.x += self.vel_x
-        self.rect.y += self.vel_y
+        self.rect.x += self.vel_x * self.player_speed
+        self.rect.y += self.vel_y * self.player_speed
 
-    def go_left(self):
-        self.vel_x = -8
-        self.image = pygame.image.load("./images/dravenflipped.png")
-
-    def go_right(self):
-        self.vel_x = 8
-        self.image = pygame.image.load("./images/draven.png")
-
-    def go_leftw(self):
-        self.vel_x = -15
-        self.image = pygame.image.load("./images/dravenflipped.png")
-
-    def go_rightw(self):
-        self.vel_x = 15
-        self.image = pygame.image.load("./images/draven.png")
-
+    # Controls for up and down
     def go_up(self):
-        self.vel_y = -8
+        self.vel_y = -4
 
     def go_down(self):
-        self.vel_y = 8
+        self.vel_y = 4
 
     def stop(self):
         self.vel_x = 0
@@ -115,10 +103,6 @@ class Enemy(pygame.sprite.Sprite):
     def update(self):
         self.rect.x += self.vel_x
         self.rect.y += self.vel_y
-
-        # if self.rect.right > WIDTH or self.rect.left < 0:
-        # self.vel_x *= -1
-
 
 class Teemo(pygame.sprite.Sprite):
     def __init__(self):
@@ -187,12 +171,18 @@ def main():
     # ----- LOCAL VARIABLES
     done = False
     clock = pygame.time.Clock()
-    score = 10
+    score = 0
     health = 1000
     bool = True
     teemo_spawned = False
-    mushroom_spawn_time = 2000
+    axe_counter = []
+
+    # ---- SPAWN TIMES
+    mushroom_spawn_time = 1000
     last_time_mushroom_spawned = pygame.time.get_ticks()
+
+    minion_spawn_time = 500
+    last_time_minion_spawned = pygame.time.get_ticks()
 
     # ---- SPRITE GROUPS
 
@@ -206,13 +196,7 @@ def main():
     player = Player()
     all_sprites_group.add(player)
 
-    # Minion creation
-    for i in range(NUM_ENEMIES):
-        enemy = Enemy(random.randrange(WIDTH, WIDTH * 3), random.randrange(50, HEIGHT), random.randrange(-2, -1), 0)
-        all_sprites_group.add(enemy)
-        enemy_group.add(enemy)
-
-    # Stronger enemy creation
+    # Teemo creation
     teemo = Teemo()
     all_sprites_group.add(teemo)
 
@@ -221,40 +205,49 @@ def main():
     background_group.add(background)
 
     # ----- MAIN LOOP
+
+
+    pygame.mixer.music.load("./assets/backgroundmusic.mp3")
+    pygame.mixer.music.play(-1)
+
     while not done:
         # -- Event Handler
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 done = True
 
+            # ---- CONTROLS
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
-                    player.go_right()
+                    player.vel_x = PLAYER_SPEED
+                    player.image = pygame.image.load("./images/draven.png")
                     bool = True
                 if event.key == pygame.K_LEFT:
-                    player.go_left()
+                    player.vel_x = -PLAYER_SPEED
+                    player.image = pygame.image.load("./images/dravenflipped.png")
                     bool = False
                 if event.key == pygame.K_UP:
                     player.go_up()
                 if event.key == pygame.K_DOWN:
                     player.go_down()
 
-                # Abilities
-                if event.key == pygame.K_q and bool:
-                    axe = Axe(player.rect.midbottom)
-                    all_sprites_group.add(axe)
-                    axe_sprites.add(axe)
-                    axe.vel_x = 8
-                if event.key == pygame.K_q and not bool:
-                    axe = Axe(player.rect.midbottom)
-                    all_sprites_group.add(axe)
-                    axe_sprites.add(axe)
-                    axe.vel_x = -8
-                if event.key == pygame.K_w and pygame.K_RIGHT and bool:
-                    player.go_rightw()
-                if event.key == pygame.K_w and pygame.K_LEFT and not bool:
-                    player.go_leftw()
+                # ----Abilities
 
+               # Axe (Q)
+                if event.key == pygame.K_q and bool and len(axe_sprites) < 5:
+                    axe = Axe(player.rect.midbottom)
+                    all_sprites_group.add(axe)
+                    axe_sprites.add(axe)
+                    axe.vel_x = 10
+                if event.key == pygame.K_q and not bool and len(axe_sprites) < 5:
+                    axe = Axe(player.rect.midbottom)
+                    all_sprites_group.add(axe)
+                    axe_sprites.add(axe)
+                    axe.vel_x = -10
+
+                # Dash (w)
+                if event.key == pygame.K_w:
+                    player.player_speed = PLAYER_DASH_SPEED
 
 
             if event.type == pygame.KEYUP:
@@ -266,10 +259,8 @@ def main():
                     player.stop()
                 if event.key == pygame.K_DOWN and player.vel_y > 0:
                     player.stop()
-                if event.key == pygame.K_w and player.vel_x > 0:
-                    player.stop()
-                if event.key == pygame.K_w and player.vel_x < 0:
-                    player.stop()
+                if event.key == pygame.K_w and player.player_speed == PLAYER_DASH_SPEED:
+                    player.player_speed = PLAYER_SPEED
 
         # Makes sure player is not out of screen (x-axis)
         if player.rect.right > WIDTH:
@@ -286,9 +277,22 @@ def main():
         # ----- LOGIC
         all_sprites_group.update()
 
+
+        # Ends game if health is less than 0
         if health <= 0:
             done = True
 
+        if health > 0 and not teemo_spawned:
+            if pygame.time.get_ticks() > last_time_minion_spawned + minion_spawn_time:
+                last_time_minion_spawned = pygame.time.get_ticks()
+
+                enemy = Enemy(WIDTH, random.randrange(50, HEIGHT), random.randrange(-2, -1), 0)
+                all_sprites_group.add(enemy)
+                enemy_group.add(enemy)
+
+
+
+        # Mushroom spawner
         if health >= 0 and teemo_spawned:
             if pygame.time.get_ticks() >  last_time_mushroom_spawned + mushroom_spawn_time:
                 last_time_mushroom_spawned = pygame.time.get_ticks()
@@ -309,34 +313,37 @@ def main():
 
 
 
-        # Check if axe collided with enemy
-
+        # Check if axe collided with minions and mushroom
         for axe in axe_sprites:
 
-            if axe.rect.right > WIDTH:
+            if axe.rect.right > WIDTH or axe.rect.right <0:
                 axe.kill()
 
             enemy_hit_group = pygame.sprite.spritecollide(axe, enemy_group, True)
             if len(enemy_hit_group) > 0:
                 axe.kill()
             for i in enemy_hit_group:
-                score += 20
-            mushroom_hit_axe = pygame.sprite.spritecollide(axe, mushroom_group, True)
+                score += 50
+
+        for mushroom in mushroom_group:
+            mushroom_hit_axe = pygame.sprite.spritecollide(mushroom, axe_sprites, True)
             if len(mushroom_hit_axe) > 0:
                 mushroom.kill()
                 axe.kill()
                 score += 50
 
+        # Check if player collided with enemy
         for enemy in enemy_group:
 
             enemy_hit_player_group = pygame.sprite.spritecollide(player, enemy_group, True)
+            # Counts score
             for i in enemy_hit_player_group:
                 score += 10
-                #health -= 50
+                health -= 50
                 print(health)
 
-            # Stronger Enemy
-            if score >= 10 and not teemo_spawned:
+            # Spawns stronger Enemy once score is reached
+            if score >= 500 and not teemo_spawned:
                 teemo.vel_x = -5
                 teemo_spawned = True
 
